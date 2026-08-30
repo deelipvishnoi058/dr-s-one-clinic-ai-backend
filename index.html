@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dr. S One Multi Specialist Clinic — AI Voice Assistant</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f3f7fb;color:#142033}
+header{padding:28px 20px;background:linear-gradient(135deg,#0f766e,#164e63);color:#fff}.wrap{max-width:900px;margin:auto}.badge{display:inline-block;background:#ffffff22;padding:6px 10px;border-radius:20px;font-size:13px}h1{margin:12px 0 6px;font-size:28px}.sub{opacity:.9}
+.card{background:#fff;border-radius:20px;padding:20px;margin:18px 0;box-shadow:0 8px 28px #00000010}.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.info div{padding:14px;background:#f8fafc;border-radius:14px}
+.chat{height:340px;overflow:auto;background:#f8fafc;border-radius:16px;padding:14px}.msg{padding:11px 14px;border-radius:15px;margin:9px 0;max-width:88%;white-space:pre-wrap}.bot{background:#e2e8f0}.user{background:#dbeafe;margin-left:auto}
+button{border:0;border-radius:13px;padding:13px 18px;margin:6px 4px;font-weight:650;cursor:pointer}.primary{background:#0f766e;color:#fff}.danger{background:#fee2e2;color:#991b1b}.small{font-size:13px;color:#64748b}.services{display:flex;flex-wrap:wrap;gap:8px}.pill{padding:8px 11px;background:#ecfeff;border-radius:20px;font-size:14px}
+</style></head>
+<body>
+<header><div class="wrap"><span class="badge">AI Voice Assistant • Test Version</span><h1>Dr. S One Multi Specialist Clinic</h1><div class="sub">Skin • Hair • Dental Care</div></div></header>
+<main class="wrap">
+<section class="card"><div class="info">
+<div>📍 <b>Address</b><br>272, B Road, Near Boys Zone, Laxmi Nagar, Paota, Jodhpur 342006</div>
+<div>🕘 <b>Timing</b><br>9:00 AM – 9:00 PM</div>
+</div></section>
+<section class="card"><h2>🎙️ Clinic AI Voice Assistant</h2><p class="small">Hindi / Hinglish में clinic से जुड़ा सामान्य सवाल पूछें। AI verified clinic information के आधार पर जवाब देगा।</p>
+<div id="chat" class="chat"><div class="msg bot">नमस्ते! मैं Dr. S One Multi Specialist Clinic का AI virtual assistant हूँ। आप services, treatment, fees, timing, location, appointment या clinic से जुड़ा कोई सामान्य सवाल पूछ सकते हैं।</div></div>
+<button class="primary" id="mic">🎙️ बोलकर पूछें</button><button class="danger" id="stop">⏹ रोकें</button><div id="status" class="small">पहली बार 🎙️ दबाने पर Microphone permission Allow करें।</div></section>
+<section class="card"><h2>Services</h2><div class="services"><span class="pill">Skin conditions & treatments</span><span class="pill">Hair conditions & treatments</span><span class="pill">Dental conditions & treatments</span><span class="pill">Hydra Facial</span><span class="pill">Carbon Peel</span><span class="pill">Hair GFC</span><span class="pill">Consultation</span></div><p class="small">Fees केवल वही बताई जाएँगी जो clinic knowledge में verified/stored हैं।</p></section>
+<section class="card"><h3>⚕️ Safety</h3><p class="small">यह assistant सामान्य clinic/service information और appointment assistance के लिए है। Diagnosis, prescription या emergency treatment advice नहीं देता। ऐसी जरूरत में qualified doctor/clinic staff से संपर्क करें।</p></section>
+</main>
+<script>
+const chat=document.querySelector('#chat'),status=document.querySelector('#status'),mic=document.querySelector('#mic'),stop=document.querySelector('#stop');
+const ENDPOINT=window.CLINIC_AI_ENDPOINT||'/api/chat';
+const history=[];
+function add(t,c){const d=document.createElement('div');d.className='msg '+c;d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
+function speak(t){if(window.speechSynthesis){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='hi-IN';u.rate=.95;speechSynthesis.speak(u)}}
+async function askAI(q){
+  history.push({role:'user',text:q});
+  try{
+    const res=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,history})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||'AI server error');
+    const answer=data.answer||'माफ कीजिए, अभी जवाब नहीं मिल पाया।';
+    history.push({role:'assistant',text:answer});
+    add(answer,'bot'); speak(answer);
+  }catch(e){
+    add('अभी AI server से connection नहीं हो पाया। पहले backend/API setup करना होगा।','bot');
+    setStatus('⚠️ AI backend connect नहीं है। README में setup steps देखें।');
+  }
+}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let r=null,listening=false;
+function setStatus(t){status.textContent=t}
+async function requestMicPermission(){
+ if(!window.isSecureContext){setStatus('⚠️ Voice के लिए HTTPS website खोलें।');return false}
+ if(!navigator.mediaDevices?.getUserMedia){setStatus('⚠️ इस browser में microphone उपलब्ध नहीं है। Chrome में खोलें।');return false}
+ try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());return true}
+ catch(e){setStatus(e.name==='NotAllowedError'?'🎙️ Microphone permission Block है। Chrome Site settings में Microphone → Allow करें।':'🎙️ Microphone शुरू नहीं हो सका: '+e.name);return false}
+}
+if(!SR){mic.disabled=true;setStatus('इस browser में voice recognition उपलब्ध नहीं है। Android Chrome में HTTPS website खोलें।')}
+else{
+ r=new SR();r.lang='hi-IN';r.interimResults=false;r.continuous=false;r.maxAlternatives=1;
+ r.onstart=()=>{listening=true;mic.disabled=true;setStatus('🎙️ सुन रहा हूँ... बोलिए')};
+ r.onend=()=>{listening=false;mic.disabled=false;if(status.textContent.includes('सुन रहा हूँ'))setStatus('फिर से बोलने के लिए बटन दबाएँ।')};
+ r.onerror=e=>{listening=false;mic.disabled=false;setStatus(e.error==='not-allowed'?'🎙️ Microphone permission नहीं मिली। Chrome Site settings → Microphone → Allow करें।':'Voice error: '+e.error)};
+ r.onresult=async e=>{const q=e.results[0][0].transcript;add(q,'user');setStatus('🧠 AI जवाब तैयार कर रहा है...');await askAI(q);setStatus('फिर से बोलने के लिए बटन दबाएँ।')};
+ mic.onclick=async()=>{if(listening)return;const ok=await requestMicPermission();if(!ok)return;try{r.start()}catch(e){if(e.name!=='InvalidStateError')setStatus('Voice start नहीं हो पाया: '+e.message)}};
+ stop.onclick=()=>{if(r&&listening)r.stop();else setStatus('Voice बंद है।')};
+}
+</script></body></html>
