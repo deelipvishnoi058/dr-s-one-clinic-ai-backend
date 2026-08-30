@@ -1,0 +1,7 @@
+{
+  "name":"dr-s-one-clinic-ai-voice-assistant",
+  "version":"1.0.0",
+  "private":true,
+  "scripts":{"start":"node server.js"},
+  "dependencies":{"dotenv":"^16.4.5","express":"^5.1.0"}
+}
